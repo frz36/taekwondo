@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TAEKWONDO UMP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0d0d;--surface:#161616;--text:#f2f0eb;
+  --text-muted:rgba(242,240,235,0.45);--accent:#FF3B00;--accent-hover:#e03200;
+  --white:#ffffff;--border:rgba(242,240,235,0.08);
+  --font-display:'Bebas Neue',sans-serif;--font-body:'Inter',sans-serif;
+}
+html{scroll-behavior:auto}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:14px;overflow-x:hidden;cursor:none}
+body.touch-device{cursor:auto}
+
+/* INTRO ANIMATION */
+#intro{position:fixed;inset:0;z-index:9000}
+body.intro-running{overflow:hidden}
+#intro.done{display:none}
+
+/* Orange bg */
+.intro-bg{position:absolute;inset:0;background:var(--accent)}
+
+/* Centered wrapper */
+.intro-text-wrap{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  white-space:nowrap;
+  /* THE MASK: text shape clips everything inside */
+  -webkit-mask-image:url(#introMaskSvg);
+  mask-image:url(#introMaskSvg)}
+
+/* SVG mask holder — hidden, just defines the mask shape */
+.intro-svg-mask{position:absolute;width:0;height:0;overflow:hidden}
+
+/* Canvas approach instead — use two layered divs, both masked by text via mix-blend */
+.intro-text-stage{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  white-space:nowrap;
+  line-height:1}
+
+/* Outer text element using SVG clip */
+.intro-canvas{
+  position:relative;
+  display:inline-block}
+
+/* Base layer inside text shape — dark tint */
+.intro-layer-base{
+  font-family:var(--font-display);
+  font-size:clamp(48px,9vw,140px);
+  letter-spacing:-0.02em;
+  color:rgba(0,0,0,0.12);
+  display:block;
+  user-select:none}
+
+/* White rectangle that travels left→right, clipped by text shape via mix-blend-mode */
+.intro-wipe-container{
+  position:absolute;
+  inset:0;
+  overflow:hidden;
+  /* Use mix-blend-mode:screen so white rect only shows through text pixels */
+  mix-blend-mode:screen}
+
+.intro-wipe-rect{
+  position:absolute;
+  top:0;bottom:0;
+  left:0;
+  width:0%;
+  background:#ffffff;
+  transition:width 0.85s cubic-bezier(0.77,0,0.18,1)}
+
+.intro-wipe-rect.go{width:100%}
+
+/* The text clone that creates the mix-blend mask effect */
+.intro-layer-clone{
+  position:absolute;
+  inset:0;
+  font-family:var(--font-display);
+  font-size:clamp(48px,9vw,140px);
+  letter-spacing:-0.02em;
+  color:#ffffff;
+  display:block;
+  user-select:none;
+  /* clip-path wipe — this IS the correct masking: white rect reveals white text */
+  clip-path:inset(0 100% 0 0);
+  transition:clip-path 0.85s cubic-bezier(0.77,0,0.18,1)}
+
+.intro-layer-clone.go{clip-path:inset(0 0% 0 0)}
+
+/* Exit */
+.intro-text-stage.exit{
+  animation:introExit 0.55s cubic-bezier(0.55,0,1,0.45) forwards}
+@keyframes introExit{
+  0%{opacity:1;transform:translate(-50%,-50%)}
+  100%{opacity:0;transform:translate(-50%,-75%)}}
+
+/* Orange slides up */
+.intro-bg.slide-up{
+  animation:introBgUp 0.9s cubic-bezier(0.76,0,0.24,1) forwards}
+@keyframes introBgUp{
+  0%{transform:translateY(0)}
+  100%{transform:translateY(-100%)}}
+
+/* CURSOR */
+#cursor{position:fixed;width:12px;height:12px;background:var(--accent);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%)}
+#cursor-ring{position:fixed;width:36px;height:36px;border:1px solid rgba(255,59,0,0.4);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%)}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px 48px;display:flex;align-items:center;justify-content:space-between;transition:background 0.3s,border-color 0.3s;border-bottom:1px solid transparent}
+nav.scrolled{background:rgba(13,13,13,0.96)}
+.nav-logo{font-family:var(--font-display);font-size:24px;letter-spacing:0.1em;color:var(--text);text-decoration:none}
+.nav-links{display:flex;gap:32px;list-style:none}
+.nav-links a{font-family:var(--font-body);font-size:14px;color:var(--text-muted);text-decoration:none;text-transform:uppercase;letter-spacing:0.12em;transition:color 0.2s}
+.nav-links a:hover{color:var(--accent)}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px}
+.hamburger span{display:block;width:24px;height:1px;background:var(--text);transition:all 0.3s}
+.mobile-menu{display:none;position:fixed;inset:0;background:var(--bg);z-index:99;flex-direction:column;align-items:center;justify-content:center;gap:28px}
+.mobile-menu.open{display:flex}
+.mobile-menu a{font-family:var(--font-display);font-size:52px;color:var(--text);text-decoration:none;transition:color 0.2s}
+.mobile-menu a:hover{color:var(--accent)}
+
+/* HERO */
+#hero{position:relative;height:100vh;min-height:600px;overflow:hidden}
+/* Video background */
+.hero-video-wrap{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.hero-vimeo{
+  position:absolute;inset:0;
+  width:100%;height:100%;
+  object-fit:cover;object-position:center top;
+  filter:none}
+/* Dark gradient — stronger bottom+left, lighter top-right so athlete visible */
+.hero-bg-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0) 0%,rgba(0,0,0,0.75) 100%);pointer-events:none;z-index:1}
+
+/* TOP-LEFT: label tag */
+/* TAG + HEADLINE grouped, centered vertically together */
+.hero-headline-group{position:absolute;top:50%;left:48px;z-index:3;
+  transform:translateY(-50%);
+  display:flex;flex-direction:column;gap:24px}
+.hero-tag{font-family:var(--font-body);font-size:14px;color:rgba(255,255,255,0.55);
+  letter-spacing:0.12em;text-transform:uppercase;
+  border:1px solid rgba(255,255,255,0.2);padding:6px 14px;
+  display:inline-block;width:fit-content;
+  opacity:0;transform:translateY(16px);transition:all 0.6s ease 0.1s}
+.hero-tag.visible{opacity:1;transform:translateY(0)}
+.hero-headline{font-family:var(--font-display);
+  font-size:clamp(72px,11vw,160px);
+  line-height:0.88;color:var(--white);
+  letter-spacing:-0.01em;
+  max-width:55vw}
+.hero-word{display:inline-block;opacity:0;transform:translateY(60px);
+  transition:opacity 0.7s ease,transform 0.7s cubic-bezier(0.16,1,0.3,1)}
+.hero-word.visible{opacity:1;transform:translateY(0)}
+
+/* BOTTOM-LEFT: subtext + CTA — fixed to bottom, no overlap */
+.hero-bottom-left{position:absolute;bottom:52px;left:48px;z-index:3;
+  opacity:0;transform:translateY(20px);transition:all 0.7s ease 0.9s;
+  max-width:300px}
+.hero-bottom-left.visible{opacity:1;transform:translateY(0)}
+.hero-sub{font-family:var(--font-body);font-size:14px;color:rgba(255,255,255,0.55);
+  line-height:1.8;margin-bottom:24px}
+/* CTA pill button */
+.btn-primary{display:inline-flex;align-items:center;gap:14px;
+  font-family:var(--font-display);font-size:20px;letter-spacing:0.06em;
+  padding:14px 14px 14px 32px;
+  background:var(--accent);color:var(--white);
+  text-decoration:none;cursor:none;
+  border-radius:40px;
+  transition:background 0.25s,transform 0.25s}
+.btn-primary:hover{background:var(--accent-hover);transform:scale(1.03)}
+.btn-arrow{width:40px;height:40px;background:rgba(0,0,0,0.25);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+
+/* BOTTOM-RIGHT: stats row */
+.hero-stats{position:absolute;bottom:48px;right:48px;z-index:3;
+  display:flex;gap:64px;
+  opacity:0;transform:translateY(20px);transition:all 0.7s ease 1.1s}
+.hero-stats.visible{opacity:1;transform:translateY(0)}
+.stat-item{text-align:center}
+.stat-num{font-family:var(--font-display);font-size:clamp(48px,5vw,72px);
+  color:var(--white);line-height:1;display:block}
+.stat-label{font-family:var(--font-body);font-size:14px;
+  color:rgba(255,255,255,0.45);text-transform:uppercase;
+  letter-spacing:0.1em;margin-top:6px;display:block}
+
+/* TOP-RIGHT: small accent text */
+.hero-top-right{position:absolute;top:100px;right:48px;z-index:3;
+  text-align:right;max-width:180px;
+  opacity:0;transition:opacity 0.7s ease 1.3s}
+.hero-top-right.visible{opacity:1}
+.hero-top-right p{font-family:var(--font-body);font-size:14px;
+  color:rgba(255,255,255,0.4);line-height:1.8}
+
+/* SCROLL INDICATOR */
+.hero-scroll{position:absolute;bottom:52px;left:50%;transform:translateX(-50%);
+  z-index:3;display:flex;flex-direction:column;align-items:center;gap:8px;
+  opacity:0;animation:fadeInScroll 0.6s ease 1.6s forwards}
+@keyframes fadeInScroll{to{opacity:0.4}}
+.hero-scroll-line{width:1px;height:40px;background:rgba(255,255,255,0.3);
+  animation:scrollPulse 2s ease infinite}
+@keyframes scrollPulse{
+  0%{transform:scaleY(0);transform-origin:top}
+  50%{transform:scaleY(1);transform-origin:top}
+  51%{transform-origin:bottom}
+  100%{transform:scaleY(0);transform-origin:bottom}
+}
+
+/* MARQUEE */
+.marquee-strip{overflow:hidden;background:var(--accent);padding:12px 0;white-space:nowrap}
+.marquee-inner{display:inline-flex;animation:marquee 18s linear infinite}
+.marquee-inner span{font-family:var(--font-display);font-size:18px;color:var(--white);padding:0 32px;letter-spacing:0.08em}
+@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* REVEAL */
+.reveal{opacity:0;transform:translateY(60px);transition:opacity 0.8s ease,transform 0.8s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal-delay-1{transition-delay:0.1s}.reveal-delay-2{transition-delay:0.2s}
+.reveal-delay-3{transition-delay:0.3s}.reveal-delay-4{transition-delay:0.4s}
+.reveal-delay-5{transition-delay:0.5s}.reveal-delay-6{transition-delay:0.6s}
+
+/* SECTION COMMON */
+.section-label{font-family:var(--font-body);font-size:14px;color:var(--accent);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:20px}
+.section-headline{font-family:var(--font-display);font-size:clamp(48px,6.5vw,96px);line-height:0.9;color:var(--text)}
+.section-big-header{font-family:var(--font-display);font-size:clamp(80px,14vw,180px);line-height:0.85;color:var(--text);letter-spacing:-0.01em}
+
+/* ABOUT — scroll opacity text + photo grid */
+#about{position:relative;overflow:hidden;background:var(--bg)}
+.about-scroll-text{position:relative;padding:140px 48px 60px;z-index:2}
+.about-text-mask{overflow:visible}
+.about-big-text{font-family:var(--font-display);font-size:clamp(48px,7vw,104px);line-height:1;color:var(--text);display:block;word-spacing:0.15em}
+/* Per-character spans */
+.about-char{display:inline-block;color:rgba(242,240,235,0.1);transition:color 0.3s ease}
+.about-char.lit{color:var(--text)}
+.about-char.space{display:inline-block;width:0.28em}
+.about-label{font-family:var(--font-body);font-size:14px;color:var(--accent);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:32px;display:block}
+/* photo grid */
+.about-photos{display:flex;gap:12px;align-items:stretch;padding:0 48px;margin-bottom:120px;height:520px}
+.about-photo{overflow:hidden;background:var(--surface);flex:1;min-width:0}
+.about-photo img{width:100%;height:100%;object-fit:cover;filter:grayscale(60%) contrast(1.1);transition:transform 0.6s ease,filter 0.6s ease;display:block}
+.about-photo:hover img{transform:scale(1.05);filter:grayscale(20%) contrast(1.05)}
+.about-photo-1{flex:1.1}
+.about-photo-2{flex:0.8}
+.about-photo-3{flex:1.3}
+.about-photo-4{flex:0.9}
+
+/* JADWAL — How We Work style */
+#jadwal{padding:80px 0 120px;overflow:hidden}
+.jadwal-inner{display:grid;grid-template-columns:380px 1fr;min-height:560px}
+.jadwal-left{padding:60px 48px;display:flex;flex-direction:column;justify-content:space-between;border-right:1px solid var(--border)}
+.jadwal-big-header{font-family:var(--font-display);font-size:clamp(60px,9vw,128px);line-height:0.88;color:var(--text);letter-spacing:-0.02em}
+.jadwal-left-meta{margin-top:40px}
+.jadwal-loc-label{font-family:var(--font-body);font-size:14px;color:var(--accent);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:8px;display:block}
+.jadwal-loc-name{font-family:var(--font-body);font-size:14px;color:var(--text);line-height:1.8;display:block;margin-bottom:4px;font-weight:600}
+.jadwal-loc-addr{font-family:var(--font-body);font-size:14px;color:var(--text-muted);line-height:1.8}
+.jadwal-cards{display:grid;grid-template-columns:repeat(3,1fr)}
+.jadwal-card{padding:40px 36px;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:space-between;transition:background 0.3s;position:relative;overflow:hidden}
+.jadwal-card:last-child{border-right:none}
+.jadwal-card:hover{background:var(--surface)}
+.jadwal-card-top{margin-bottom:auto}
+.jadwal-step{font-family:var(--font-body);font-size:14px;color:rgba(242,240,235,0.3);letter-spacing:0.1em;margin-bottom:20px;display:flex;align-items:center;gap:4px}
+.jadwal-step-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block}
+.jadwal-card-bottom{padding-top:80px}
+.jadwal-day{font-family:var(--font-display);font-size:clamp(40px,4.5vw,64px);color:var(--text);line-height:0.9;margin-bottom:16px;display:block}
+.jadwal-time{font-family:var(--font-body);font-size:13px;color:var(--accent);margin-bottom:8px;display:block}
+.jadwal-desc{font-family:var(--font-body);font-size:14px;color:var(--text-muted);line-height:1.8}
+
+/* KEGIATAN — hover image list */
+#kegiatan{padding:80px 48px 120px;overflow:hidden;position:relative}
+.kegiatan-list{margin-top:60px;border-top:1px solid var(--border)}
+.keg-item{display:grid;grid-template-columns:80px 1fr auto;align-items:center;gap:40px;padding:28px 0;border-bottom:1px solid var(--border);cursor:none;position:relative;transition:padding 0.3s ease}
+.keg-item:hover .keg-title{color:var(--accent)}
+.keg-item:hover .keg-num{color:var(--accent)}
+.keg-num{font-family:var(--font-display);font-size:14px;color:var(--text-muted);letter-spacing:0.1em;transition:color 0.3s}
+.keg-title{font-family:var(--font-display);font-size:clamp(32px,4.5vw,64px);color:var(--text);line-height:0.9;transition:color 0.3s ease}
+.keg-meta{font-family:var(--font-body);font-size:14px;color:var(--text-muted);letter-spacing:0.08em;text-align:right}
+/* Floating image that follows cursor */
+.keg-float-img{position:fixed;width:320px;height:220px;pointer-events:none;z-index:200;overflow:hidden;opacity:0;transition:opacity 0.25s ease;border-radius:2px}
+.keg-float-img img{width:100%;height:100%;object-fit:cover;filter:grayscale(30%) contrast(1.1)}
+.keg-float-img.visible{opacity:1}
+
+/* PRESTASI CAROUSEL — staircase depth */
+#prestasi{padding:80px 0 120px;overflow:hidden;background:var(--surface)}
+.prestasi-header{padding:0 48px;margin-bottom:48px;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:end}
+.prestasi-intro{font-family:var(--font-body);font-size:13px;color:var(--text-muted);line-height:1.9;max-width:380px;padding-bottom:8px}
+/* Scene clips, track is flex centered */
+.carousel-scene{position:relative;width:100%;height:600px;overflow:hidden;user-select:none;display:flex;align-items:center}
+.carousel-track{display:flex;align-items:center;gap:20px;will-change:transform;cursor:grab;transition:transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94)}
+.carousel-track.dragging{cursor:grabbing;transition:none!important}
+/* BASE card — dim, small */
+.carousel-card{
+  flex:0 0 280px;height:380px;
+  position:relative;overflow:hidden;background:var(--bg);cursor:none;border-radius:4px;
+  transform:scale(0.72);opacity:0.3;
+  transition:transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94),opacity 0.6s ease,flex-basis 0.6s ease,height 0.6s ease}
+/* ADJACENT cards — medium */
+.carousel-card.adj-card{
+  flex:0 0 320px;height:460px;
+  transform:scale(0.88);opacity:0.65}
+/* ACTIVE card — full */
+.carousel-card.active-card{
+  flex:0 0 460px;height:580px;
+  transform:scale(1);opacity:1}
+/* Photo */
+.carousel-card-img{position:absolute;inset:0;background-size:cover;background-position:center;filter:grayscale(100%) contrast(1.2);transition:filter 0.6s ease,transform 0.6s ease}
+.carousel-card.adj-card .carousel-card-img{filter:grayscale(60%) contrast(1.15)}
+.carousel-card.active-card .carousel-card-img{filter:grayscale(0%) contrast(1.05)}
+.carousel-card:hover .carousel-card-img{transform:scale(1.04)}
+/* Overlay */
+.carousel-card-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(13,13,13,0.98) 0%,rgba(13,13,13,0.7) 50%,rgba(13,13,13,0.25) 100%)}
+.carousel-card.active-card .carousel-card-overlay{background:linear-gradient(to top,rgba(13,13,13,0.92) 0%,rgba(13,13,13,0.2) 55%,rgba(255,59,0,0.04) 100%)}
+/* Accent top line on active */
+/* no top border on active card */
+/* Content */
+.carousel-card-content{position:absolute;bottom:0;left:0;right:0;padding:28px;z-index:2}
+.carousel-card-year{font-family:var(--font-display);font-size:64px;color:var(--accent);line-height:1;display:block;margin-bottom:2px}
+.carousel-card-event{font-family:var(--font-display);font-size:22px;color:var(--white);line-height:0.95;margin-bottom:8px}
+.carousel-card-loc{font-family:var(--font-body);font-size:11px;color:var(--text-muted)}
+.carousel-card-medal{display:inline-block;font-family:var(--font-display);font-size:12px;letter-spacing:0.08em;padding:5px 14px;margin-bottom:16px}
+.medal-gold{background:rgba(255,184,0,0.15);color:#FFB800;border:1px solid rgba(255,184,0,0.35)}
+.medal-silver{background:rgba(176,184,193,0.15);color:#B0B8C1;border:1px solid rgba(176,184,193,0.35)}
+.medal-bronze{background:rgba(205,127,50,0.15);color:#CD7F32;border:1px solid rgba(205,127,50,0.35)}
+/* Nav — centered, no dots */
+.carousel-nav{display:flex;gap:16px;padding:36px 0 0;justify-content:center;align-items:center}
+.carousel-btn{width:52px;height:52px;background:transparent;border:1px solid var(--border);color:var(--text-muted);border-radius:999px;cursor:none;transition:all 0.25s;display:flex;align-items:center;justify-content:center}
+.carousel-btn:hover{border-color:var(--white);color:var(--bg);background:var(--white)}
+
+
+/* TESTIMONIAL */
+#testimonial{min-height:100vh;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:80px 96px;text-align:center}
+.testi-inner{max-width:1100px;display:flex;flex-direction:column;align-items:center;gap:48px}
+.testi-quote{font-family:var(--font-display);font-size:clamp(40px,5.5vw,80px);color:var(--text);line-height:1.05;letter-spacing:0.01em}
+.testi-quote::before{content:'"';color:var(--accent)}
+.testi-quote::after{content:'"';color:var(--accent)}
+.testi-author{display:flex;align-items:center;gap:16px}
+.testi-avatar{width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0;filter:grayscale(40%)}
+.testi-name{font-family:var(--font-display);font-size:18px;color:var(--text);letter-spacing:0.04em;display:block;line-height:1;text-align:left}
+.testi-role{font-family:var(--font-body);font-size:14px;color:var(--text-muted);margin-top:4px;display:block;text-align:left}
+/* SHOWREEL / CTA */
+#showreel{position:relative;height:100vh;overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:none}
+.showreel-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;filter:brightness(0.55)}
+.showreel-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(13,13,13,0.1) 0%,rgba(13,13,13,0.55) 100%)}
+/* CTA text center */
+.showreel-cta-block{position:relative;z-index:2;text-align:center;display:flex;flex-direction:column;align-items:center;gap:0}
+.showreel-cta-overline{font-family:var(--font-body);font-size:14px;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.18em;margin-bottom:24px}
+.showreel-cta-headline{font-family:var(--font-display);font-size:clamp(56px,9vw,130px);color:var(--white);line-height:0.88;margin-bottom:24px;letter-spacing:-0.01em}
+.showreel-cta-sub{font-family:var(--font-body);font-size:14px;color:rgba(255,255,255,0.55);max-width:480px;line-height:1.7;margin-bottom:48px}
+.showreel-cta-btn{display:inline-flex;align-items:center;gap:14px;font-family:var(--font-display);font-size:20px;letter-spacing:0.06em;padding:14px 14px 14px 32px;background:var(--accent);color:var(--white);text-decoration:none;border-radius:40px;cursor:none;transition:background 0.25s,transform 0.25s}
+.showreel-cta-btn:hover{background:var(--accent-hover);transform:scale(1.03)}
+.showreel-play-wrap{display:flex;align-items:center;gap:12px;cursor:none}
+.showreel-play{width:52px;height:52px;border:1.5px solid rgba(255,255,255,0.5);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:none;transition:all 0.3s}
+.showreel-play:hover{border-color:var(--white);background:rgba(255,255,255,0.1)}
+.play-icon{width:0;height:0;border-style:solid;border-width:10px 0 10px 18px;border-color:transparent transparent transparent var(--white);margin-left:4px}
+.showreel-play-label{font-family:var(--font-body);font-size:14px;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.14em}
+.showreel-content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:32px}
+.showreel-label{font-family:var(--font-body);font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.2em}
+.showreel-play{width:88px;height:88px;border:1.5px solid rgba(255,255,255,0.5);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:none;transition:all 0.35s ease;position:relative}
+.showreel-play::before{content:'';position:absolute;inset:0;border-radius:50%;border:1.5px solid var(--accent);transform:scale(0);opacity:0;transition:all 0.35s ease}
+.showreel-play:hover{border-color:transparent}
+.showreel-play:hover::before{transform:scale(1);opacity:1}
+.showreel-play:hover .play-icon{color:var(--accent)}
+.play-icon{width:0;height:0;border-style:solid;border-width:14px 0 14px 24px;border-color:transparent transparent transparent var(--white);margin-left:6px;transition:border-color 0.3s}
+.showreel-cta-text{font-family:var(--font-display);font-size:clamp(14px,1.2vw,18px);color:var(--white);letter-spacing:0.15em;opacity:0.7}
+/* Modal */
+.video-modal{position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.4s ease}
+.video-modal.open{opacity:1;pointer-events:all}
+.video-modal-inner{width:90vw;max-width:1100px;aspect-ratio:16/9;position:relative}
+.video-modal-inner iframe,.video-modal-inner video{width:100%;height:100%;border:none}
+.video-close{position:absolute;top:-48px;right:0;font-family:var(--font-display);font-size:32px;color:var(--white);cursor:none;opacity:0.6;transition:opacity 0.2s;background:none;border:none}
+.video-close:hover{opacity:1}
+
+/* FOOTER — Derek Cole style */
+footer{position:relative;background:var(--bg);overflow:hidden;padding-top:120px}
+.footer-social-row{display:flex;justify-content:space-between;padding:0 48px 48px}
+.footer-social-link{font-family:var(--font-body);font-size:14px;color:var(--text-muted);text-decoration:none;text-transform:uppercase;letter-spacing:0.14em;display:flex;align-items:center;gap:5px;transition:color 0.2s}
+.footer-social-link .link-arrow{display:inline-flex;vertical-align:middle;margin-left:4px;opacity:0.5;transform:scale(2);transform-origin:center}
+.footer-social-link:hover{color:var(--text)}
+.footer-big-name{overflow:hidden;line-height:0.82;position:relative;z-index:2;width:100%}
+.footer-big-name span{
+  font-family:var(--font-display);
+  font-size:100px;
+  color:var(--white);
+  letter-spacing:-0.03em;
+  display:block;
+  white-space:nowrap;
+  padding:0;
+  margin:0;
+  width:100%;
+}
+.footer-bottom{padding:16px 48px 32px;display:flex;justify-content:space-between;align-items:center}
+.footer-copy{font-family:var(--font-body);font-size:14px;color:var(--text-muted);letter-spacing:0.06em}
+.footer-made{font-family:var(--font-body);font-size:14px;color:var(--text-muted);letter-spacing:0.06em}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  nav{padding:16px 24px}
+  .nav-links{display:none}
+  .hamburger{display:flex}
+  #hero{height:100svh}
+  .hero-tag{top:80px;left:24px;font-size:10px}
+  .hero-headline{top:110px;left:24px;font-size:clamp(56px,17vw,120px);max-width:90vw}
+  .hero-top-right{display:none}
+  .hero-bottom-left{bottom:100px;left:24px}
+  .hero-sub{font-size:11px;max-width:200px}
+  .hero-stats{bottom:28px;right:24px;gap:20px}
+  .stat-num{font-size:28px}
+  .hero-scroll{display:none}
+  .about-scroll-text{padding:100px 24px 60px}
+  .about-photos{height:260px;padding:0 24px;gap:8px;margin-bottom:60px}
+  .about-photo-4{flex:0.6}
+  #jadwal{padding:60px 24px 80px}
+  .jadwal-inner{grid-template-columns:1fr;grid-template-rows:auto auto}
+  .jadwal-left{padding:48px 24px;border-right:none;border-bottom:1px solid var(--border)}
+  .jadwal-cards{grid-template-columns:1fr}
+  .jadwal-card{border-right:none;border-bottom:1px solid var(--border);padding:32px 24px}
+  #kegiatan{padding:60px 24px 80px}
+  .keg-item{grid-template-columns:48px 1fr;gap:20px}
+  .keg-meta{display:none}
+  .keg-title{font-size:28px}
+  .keg-float-img{display:none}
+  #prestasi{padding:60px 0 80px}
+  .prestasi-header{grid-template-columns:1fr;gap:24px;padding:0 24px}
+  .carousel-scene{height:440px}
+  .carousel-card{flex:0 0 160px;height:240px}
+  .carousel-card.adj-card{flex:0 0 200px;height:300px}
+  .carousel-card.active-card{flex:0 0 280px;height:400px}
+  .carousel-card-year{font-size:44px}
+  .carousel-card-event{font-size:17px}
+  .carousel-nav{padding:24px 24px 0}
+  #cta{grid-template-columns:1fr}
+  .cta-left{padding:60px 24px}
+  .cta-right{min-height:400px}
+  .cta-right-content{padding:40px 24px}
+  footer{padding-top:0}
+  .footer-top-info{grid-template-columns:1fr;gap:32px;padding:48px 24px}
+  .footer-big-name{padding:0 24px}
+  .footer-bottom{flex-direction:column;gap:8px;text-align:center;padding:16px 24px 24px}
+}
+</style>
+</head>
+<body>
+<!-- INTRO -->
+<div id="intro">
+  <div class="intro-bg" id="introBg"></div>
+
+  <div class="intro-text-stage" id="introStage">
+    <div class="intro-canvas">
+      <!-- Base: dark text at 12% opacity — always visible -->
+      <span class="intro-layer-base">TAEKWONDO</span>
+      <!-- White clone: clipped left→right by clip-path wipe -->
+      <span class="intro-layer-clone" id="introClone">TAEKWONDO</span>
+    </div>
+  </div>
+</div>
+
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#about" onclick="closeMobile()">About</a>
+  <a href="#jadwal" onclick="closeMobile()">Jadwal</a>
+  <a href="#kegiatan" onclick="closeMobile()">Kegiatan</a>
+  <a href="#prestasi" onclick="closeMobile()">Prestasi</a>
+  <a href="#showreel" onclick="closeMobile()">Showreel</a>
+</div>
+
+<nav id="navbar">
+  <a href="#" class="nav-logo">TKD UMP</a>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#jadwal">Jadwal</a></li>
+    <li><a href="#kegiatan">Kegiatan</a></li>
+    <li><a href="#prestasi">Prestasi</a></li>
+    <li><a href="#showreel">Showreel</a></li>
+  </ul>
+  <div class="hamburger" onclick="toggleMobile()"><span></span><span></span><span></span></div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-video-wrap">
+    <video class="hero-vimeo" autoplay muted loop playsinline>
+      <source src="https://res.cloudinary.com/defugsrhy/video/upload/v1780233498/tttttttttt_hvkor3.mov" type="video/quicktime">
+      <source src="https://res.cloudinary.com/defugsrhy/video/upload/v1780233498/tttttttttt_hvkor3.mov" type="video/mp4">
+    </video>
+  </div>
+  <div class="hero-bg-overlay"></div>
+
+  <!-- TAG + HEADLINE grouped -->
+  <div class="hero-headline-group">
+    <div class="hero-tag" id="heroTag">[ UKM Taekwondo — Est. 2005 ]</div>
+    <h1 class="hero-headline" id="heroHeadline">
+      <span class="hero-word" style="transition-delay:0.15s">TEMPA DIRI.</span><br>
+      <span class="hero-word" style="transition-delay:0.35s">RAIH PRESTASI.</span>
+    </h1>
+  </div>
+
+  <!-- BOTTOM LEFT: subtext + CTA -->
+  <div class="hero-bottom-left" id="heroBottomLeft">
+    <p class="hero-sub">Unit Kegiatan Mahasiswa Taekwondo —
+membentuk karakter, disiplin, dan juara.</p>
+    <a href="#about" class="btn-primary">
+      DAFTAR SEKARANG
+      <span class="btn-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+    </a>
+  </div>
+
+  <div class="hero-top-right" id="heroTopRight"></div>
+
+  <!-- BOTTOM RIGHT: stats -->
+  <div class="hero-stats" id="heroStats">
+    <div class="stat-item">
+      <span class="stat-num" data-target="150" data-suffix="+">0</span>
+      <span class="stat-label">Anggota</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num" data-target="23" data-suffix="">0</span>
+      <span class="stat-label">Medali</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num" data-target="18" data-suffix="">0</span>
+      <span class="stat-label">Tahun</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num" data-target="3" data-suffix="×">0</span>
+      <span class="stat-label">Juara</span>
+    </div>
+  </div>
+
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee-strip">
+  <div class="marquee-inner">
+    <span>TAEKWONDO UMP</span><span>+</span><span>TEMPA DIRI</span><span>+</span>
+    <span>RAIH PRESTASI</span><span>+</span><span>KAMPUS PEJUANG</span><span>+</span>
+    <span>DISIPLIN TANPA KOMPROMI</span><span>+</span><span>TAEKWONDO UMP</span><span>+</span>
+    <span>TEMPA DIRI</span><span>+</span><span>RAIH PRESTASI</span><span>+</span>
+    <span>KAMPUS PEJUANG</span><span>+</span><span>DISIPLIN TANPA KOMPROMI</span><span>+</span>
+  </div>
+</div>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="about-scroll-text">
+    <span class="about-label">/ Tentang Kami</span>
+    <div class="about-text-mask" id="aboutTextWrap">
+      <p class="about-big-text" id="aboutBigText"></p>
+    </div>
+  </div>
+  <div class="about-photos reveal">
+    <div class="about-photo about-photo-1">
+      <img src="https://images.unsplash.com/photo-1555597673-b21d5c935865?w=600&auto=format&fit=crop" alt="">
+    </div>
+    <div class="about-photo about-photo-2">
+      <img src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=500&auto=format&fit=crop" alt="">
+    </div>
+    <div class="about-photo about-photo-3">
+      <img src="https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=700&auto=format&fit=crop" alt="">
+    </div>
+    <div class="about-photo about-photo-4">
+      <img src="https://images.unsplash.com/photo-1517649763962-0c623066013b?w=400&auto=format&fit=crop" alt="">
+    </div>
+  </div>
+
+</section>
+
+<!-- JADWAL -->
+<section id="jadwal">
+  <div class="jadwal-inner">
+    <div class="jadwal-left reveal">
+      <h2 class="jadwal-big-header">JADWAL<br>LATIHAN</h2>
+      <div class="jadwal-left-meta">
+        <span class="jadwal-loc-label">Lokasi</span>
+        <span class="jadwal-loc-name">GOR KAMPUS UMP</span>
+        <p class="jadwal-loc-addr">Jl. Raya Dukuhwaluh No.1<br>Kembaran, Purwokerto 53182</p>
+      </div>
+    </div>
+    <div class="jadwal-cards">
+      <div class="jadwal-card reveal">
+        <div class="jadwal-card-top">
+          <p class="jadwal-step">SESI 1 <span class="jadwal-step-dot"></span></p>
+        </div>
+        <div class="jadwal-card-bottom">
+          <span class="jadwal-day">SENIN</span>
+          <span class="jadwal-time">15.30 – 17.30 WIB</span>
+          <p class="jadwal-desc">Latihan teknik dasar &amp; poomsae. Terbuka untuk semua tingkatan sabuk.</p>
+        </div>
+      </div>
+      <div class="jadwal-card reveal reveal-delay-1">
+        <div class="jadwal-card-top">
+          <p class="jadwal-step">SESI 2 <span class="jadwal-step-dot"></span></p>
+        </div>
+        <div class="jadwal-card-bottom">
+          <span class="jadwal-day">RABU</span>
+          <span class="jadwal-time">15.30 – 17.30 WIB</span>
+          <p class="jadwal-desc">Sparring &amp; conditioning. Fokus untuk sabuk biru ke atas.</p>
+        </div>
+      </div>
+      <div class="jadwal-card reveal reveal-delay-2">
+        <div class="jadwal-card-top">
+          <p class="jadwal-step">SESI 3 <span class="jadwal-step-dot"></span></p>
+        </div>
+        <div class="jadwal-card-bottom">
+          <span class="jadwal-day">JUMAT</span>
+          <span class="jadwal-time">15.00 – 17.00 WIB</span>
+          <p class="jadwal-desc">Latihan gabungan &amp; evaluasi mingguan. Semua tingkatan.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- KEGIATAN -->
+<div class="keg-float-img" id="kegFloatImg">
+  <img src="" alt="" id="kegFloatImgEl">
+</div>
+<section id="kegiatan">
+  <h2 class="section-big-header reveal">KEGIATAN</h2>
+  <div class="kegiatan-list">
+    <div class="keg-item reveal"
+      data-img="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=640&auto=format&fit=crop">
+      <span class="keg-num">01</span>
+      <h3 class="keg-title">LATIHAN RUTIN</h3>
+      <span class="keg-meta">Senin · Rabu · Jumat</span>
+    </div>
+    <div class="keg-item reveal reveal-delay-1"
+      data-img="https://images.unsplash.com/photo-1555597673-b21d5c935865?w=640&auto=format&fit=crop">
+      <span class="keg-num">02</span>
+      <h3 class="keg-title">KEJUARAAN</h3>
+      <span class="keg-meta">Regional &amp; Nasional</span>
+    </div>
+    <div class="keg-item reveal reveal-delay-2"
+      data-img="https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=640&auto=format&fit=crop">
+      <span class="keg-num">03</span>
+      <h3 class="keg-title">KENAIKAN SABUK</h3>
+      <span class="keg-meta">Setiap 3 Bulan</span>
+    </div>
+    <div class="keg-item reveal reveal-delay-3"
+      data-img="https://images.unsplash.com/photo-1517649763962-0c623066013b?w=640&auto=format&fit=crop">
+      <span class="keg-num">04</span>
+      <h3 class="keg-title">PELATIHAN &amp; KAMP</h3>
+      <span class="keg-meta">Intensif Semester</span>
+    </div>
+  </div>
+</section>
+
+<!-- PRESTASI CAROUSEL -->
+<section id="prestasi">
+  <div class="prestasi-header">
+    <div>
+      <p class="section-label reveal">/ Pencapaian Kami</p>
+      <h2 class="section-big-header reveal reveal-delay-1">PRESTASI</h2>
+    </div>
+    <p class="prestasi-intro reveal reveal-delay-2">Setiap medali adalah bukti kerja keras. Setiap podium adalah hasil disiplin tanpa kompromi — dari GOR UMP ke panggung nasional.</p>
+  </div>
+  <div class="carousel-scene" id="carouselScene">
+    <div class="carousel-track" id="carouselTrack">
+
+      <div class="carousel-card active-card">
+        <div class="carousel-card-img" style="background-image:url('https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=600&auto=format&fit=crop')"></div>
+        <div class="carousel-card-overlay"></div>
+        <div class="carousel-card-content">
+          <span class="carousel-card-medal medal-gold">🥇 EMAS</span>
+          <span class="carousel-card-year">2024</span>
+          <p class="carousel-card-event">KEJURNAS MAHASISWA TAEKWONDO</p>
+          <p class="carousel-card-loc">Universitas Gadjah Mada, Yogyakarta</p>
+        </div>
+      </div>
+
+      <div class="carousel-card">
+        <div class="carousel-card-img" style="background-image:url('https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=600&auto=format&fit=crop')"></div>
+        <div class="carousel-card-overlay"></div>
+        <div class="carousel-card-content">
+          <span class="carousel-card-medal medal-silver">🥈 PERAK</span>
+          <span class="carousel-card-year">2024</span>
+          <p class="carousel-card-event">PIALA REKTOR CUP JATENG</p>
+          <p class="carousel-card-loc">Universitas Diponegoro, Semarang</p>
+        </div>
+      </div>
+
+      <div class="carousel-card">
+        <div class="carousel-card-img" style="background-image:url('https://images.unsplash.com/photo-1517649763962-0c623066013b?w=600&auto=format&fit=crop')"></div>
+        <div class="carousel-card-overlay"></div>
+        <div class="carousel-card-content">
+          <span class="carousel-card-medal medal-gold">🥇 EMAS</span>
+          <span class="carousel-card-year">2023</span>
+          <p class="carousel-card-event">O2SN TINGKAT PROVINSI JAWA TENGAH</p>
+          <p class="carousel-card-loc">Purwokerto, Jawa Tengah</p>
+        </div>
+      </div>
+
+      <div class="carousel-card">
+        <div class="carousel-card-img" style="background-image:url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&auto=format&fit=crop')"></div>
+        <div class="carousel-card-overlay"></div>
+        <div class="carousel-card-content">
+          <span class="carousel-card-medal medal-bronze">🥉 PERUNGGU</span>
+          <span class="carousel-card-year">2023</span>
+          <p class="carousel-card-event">KEJUARAAN TERBUKA BANYUMAS CUP</p>
+          <p class="carousel-card-loc">GOR Satria Purwokerto</p>
+        </div>
+      </div>
+
+      <div class="carousel-card">
+        <div class="carousel-card-img" style="background-image:url('https://images.unsplash.com/photo-1546519638-68e109498ffc?w=600&auto=format&fit=crop')"></div>
+        <div class="carousel-card-overlay"></div>
+        <div class="carousel-card-content">
+          <span class="carousel-card-medal medal-silver">🥈 PERAK</span>
+          <span class="carousel-card-year">2022</span>
+          <p class="carousel-card-event">POMNAS TAEKWONDO REGIONAL III</p>
+          <p class="carousel-card-loc">Solo, Jawa Tengah</p>
+        </div>
+      </div>
+
+      <div class="carousel-card">
+        <div class="carousel-card-img" style="background-image:url('https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=600&auto=format&fit=crop')"></div>
+        <div class="carousel-card-overlay"></div>
+        <div class="carousel-card-content">
+          <span class="carousel-card-medal medal-gold">🥇 EMAS</span>
+          <span class="carousel-card-year">2022</span>
+          <p class="carousel-card-event">KEJURDA TAEKWONDO JAWA TENGAH</p>
+          <p class="carousel-card-loc">Kudus, Jawa Tengah</p>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /scene -->
+  <div class="carousel-nav">
+    <button class="carousel-btn" id="prevBtn" onclick="carouselMove(-1)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    </button>
+    <button class="carousel-btn" id="nextBtn" onclick="carouselMove(1)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </button>
+  </div>
+</section>
+
+<!-- TESTIMONIAL -->
+<section id="testimonial">
+  <div class="testi-inner">
+    <p class="testi-quote reveal">Saya bergabung tanpa pengalaman apapun. Setahun kemudian saya naik podium di kejuaraan regional. Pelatih dan teman-teman di sini luar biasa.</p>
+    <div class="testi-author reveal reveal-delay-1">
+      <img class="testi-avatar" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=88&auto=format&fit=crop&crop=face" alt="">
+      <div>
+        <span class="testi-name">DINA RAHAYU</span>
+        <span class="testi-role">Atlet Berprestasi — Juara 2 Regional, 2024</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SHOWREEL -->
+<section id="showreel">
+  <video class="showreel-video" autoplay muted loop playsinline>
+    <source src="https://res.cloudinary.com/defugsrhy/video/upload/95994c99a018a995c03eb0db2da2e31e_cjknjo.mp4" type="video/mp4">
+    <source src="https://res.cloudinary.com/defugsrhy/video/upload/95994c99a018a995c03eb0db2da2e31e_cjknjo.webm" type="video/webm">
+  </video>
+  <div class="showreel-overlay"></div>
+  <div class="showreel-cta-block">
+    <span class="showreel-cta-overline">Bergabunglah Sekarang</span>
+    <h2 class="showreel-cta-headline">SIAP JADI<br>BAGIAN KAMI?</h2>
+    <p class="showreel-cta-sub">Pendaftaran dibuka setiap awal semester. Tidak butuh pengalaman — hanya tekad dan semangat juang.</p>
+    <div style="display:flex;gap:0;align-items:center">
+      <a href="#" class="showreel-cta-btn">
+        DAFTAR SEKARANG
+        <span style="width:40px;height:40px;background:rgba(0,0,0,0.25);border-radius:50%;display:flex;align-items:center;justify-content:center">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </span>
+      </a>
+
+    </div>
+  </div>
+</section>
+<!-- VIDEO MODAL -->
+<div class="video-modal" id="videoModal">
+  <div class="video-modal-inner">
+    <button class="video-close" id="videoClose">✕</button>
+    <iframe id="videoFrame" src="" allow="autoplay" allowfullscreen></iframe>
+  </div>
+</div>
+
+<!-- FOOTER — Derek Cole style -->
+<footer>
+  <div class="footer-social-row">
+    <a href="#" class="footer-social-link">INSTAGRAM<span class="link-arrow"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg></span></a>
+    <a href="#" class="footer-social-link">TWITTER / X<span class="link-arrow"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg></span></a>
+    <a href="#" class="footer-social-link">WHATSAPP<span class="link-arrow"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg></span></a>
+    <a href="#" class="footer-social-link">YOUTUBE<span class="link-arrow"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg></span></a>
+    <a href="mailto:taekwondo@ump.ac.id" class="footer-social-link">EMAIL<span class="link-arrow"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg></span></a>
+  </div>
+  <div class="footer-big-name">
+    <span>TAEKWONDO UMP</span>
+  </div>
+  <div class="footer-bottom">
+    <p class="footer-copy">© 2024 Taekwondo UMP</p>
+    <p class="footer-made">Universitas Muhammadiyah Purwokerto</p>
+  </div>
+</footer>
+
+<script>
+// ── INTRO ANIMATION ──────────────────────────────────────────────────────────
+(function(){
+  const intro    = document.getElementById('intro');
+  const introBg  = document.getElementById('introBg');
+  const introStage = document.getElementById('introStage');
+  const introClone = document.getElementById('introClone');
+  document.body.classList.add('intro-running');
+
+  // STEP 1 — orange full screen, dark text visible at 12% (300ms hold)
+
+  // STEP 2 — white rectangle wipes L→R inside text shape (clip-path)
+  setTimeout(()=>{
+    introClone.classList.add('go'); // clip-path: inset(0 100% 0 0) → inset(0 0% 0 0)
+  }, 400);
+
+  // STEP 3 — text fully white, hold 300ms, then exit upward
+  setTimeout(()=>{
+    introStage.classList.add('exit');
+  }, 1550);
+
+  // STEP 4 — orange bg slides up
+  setTimeout(()=>{
+    introBg.classList.add('slide-up');
+  }, 1900);
+
+  // STEP 5 — fully done, trigger hero
+  setTimeout(()=>{
+    intro.classList.add('done');
+    document.body.classList.remove('intro-running');
+    const tag = document.getElementById('heroTag');
+    const words = document.querySelectorAll('.hero-word');
+    const bottomLeft = document.getElementById('heroBottomLeft');
+    const topRight = document.getElementById('heroTopRight');
+    const stats = document.getElementById('heroStats');
+    if(tag) tag.classList.add('visible');
+    words.forEach(w => w.classList.add('visible'));
+    if(bottomLeft) bottomLeft.classList.add('visible');
+    if(topRight) topRight.classList.add('visible');
+    if(stats) stats.classList.add('visible');
+    // unlock countUp gate, then fire after hero stats are visible
+    introReady=true;
+    setTimeout(()=>countUp(), 400);
+  }, 2900);
+})();
+
+// TOUCH
+if(window.matchMedia('(pointer:coarse)').matches){
+  document.body.classList.add('touch-device');
+  document.getElementById('cursor').style.display='none';
+  document.getElementById('cursor-ring').style.display='none';
+}
+
+// CURSOR
+const cursor=document.getElementById('cursor');
+const ring=document.getElementById('cursor-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cursor.style.left=mx+'px';cursor.style.top=my+'px'});
+function animRing(){rx+=(mx-rx)*0.12;ry+=(my-ry)*0.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(animRing)}
+animRing();
+
+// NAV
+const nav=document.getElementById('navbar');
+window.addEventListener('scroll',()=>nav.classList.toggle('scrolled',scrollY>60));
+function toggleMobile(){document.getElementById('mobileMenu').classList.toggle('open')}
+function closeMobile(){document.getElementById('mobileMenu').classList.remove('open')}
+
+// Hero entrance triggered by intro sequence
+
+// COUNT UP — only fires after intro completes
+let counted=false;
+let introReady=false; // gate: only count after intro done
+
+function countUp(){
+  if(counted||!introReady)return;
+  counted=true;
+  document.querySelectorAll('.stat-num[data-target]').forEach(el=>{
+    const target=+el.dataset.target;
+    const suffix=el.dataset.suffix||'';
+    const dur=1600;
+    const step=16;
+    const steps=dur/step;
+    let cur=0;
+    const inc=target/steps;
+    // easeOut: starts fast, slows down
+    let frame=0;
+    const t=setInterval(()=>{
+      frame++;
+      const progress=frame/steps;
+      const eased=1-Math.pow(1-progress,3); // cubic ease out
+      el.textContent=Math.floor(eased*target)+suffix;
+      if(frame>=steps){el.textContent=target+suffix;clearInterval(t);}
+    },step);
+  });
+}
+
+// INTERSECTION OBSERVER
+const io=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.classList.add('visible');
+      if(e.target.closest('#hero')&&introReady)countUp();
+    }
+  });
+},{threshold:0.12});
+document.querySelectorAll('.reveal,.stat-item').forEach(el=>io.observe(el));
+
+// CAROUSEL — staircase depth
+const track=document.getElementById('carouselTrack');
+const scene=document.getElementById('carouselScene');
+const cards=Array.from(track.querySelectorAll('.carousel-card'));
+let currentIdx=0;
+const total=cards.length;
+const GAP=20;
+
+function updateClasses(){
+  cards.forEach((c,i)=>{
+    c.classList.remove('active-card','adj-card');
+    const dist=Math.abs(i-currentIdx);
+    if(dist===0) c.classList.add('active-card');
+    else if(dist===1) c.classList.add('adj-card');
+    // dist>=2: base style (tiny+dim)
+  });
+}
+
+function getOffset(idx){
+  // recalc after class updates settle
+  let offset=0;
+  cards.forEach((c,i)=>{
+    if(i<idx) offset+=c.getBoundingClientRect().width+GAP;
+  });
+  const sceneW=scene.getBoundingClientRect().width;
+  const cardW=cards[idx].getBoundingClientRect().width;
+  return Math.round(offset-(sceneW/2)+(cardW/2));
+}
+
+function goTo(idx){
+  idx=((idx%total)+total)%total;
+  currentIdx=idx;
+  updateClasses();
+  // double rAF so browser recalcs widths after class change
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    const off=getOffset(currentIdx);
+    track.style.transform=`translateX(${-off}px)`;
+  }));
+}
+
+function carouselMove(dir){goTo(currentIdx+dir);}
+
+// init
+window.addEventListener('load',()=>{updateClasses();goTo(0);});
+
+// keyboard
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight') carouselMove(1);
+  if(e.key==='ArrowLeft')  carouselMove(-1);
+});
+
+// drag
+let dragStartX=0,isDragging=false,dragDelta=0,dragBaseT=0;
+function getTranslate(){
+  const t=getComputedStyle(track).transform;
+  if(!t||t==='none') return 0;
+  try{return new DOMMatrix(t).m41;}catch(e){return 0;}
+}
+let baseTranslate=0;
+scene.addEventListener('mousedown',e=>{
+  isDragging=true;dragStartX=e.clientX;dragBaseT=Date.now();
+  baseTranslate=getTranslate();
+  track.classList.add('dragging');
+});
+window.addEventListener('mousemove',e=>{
+  if(!isDragging) return;
+  dragDelta=e.clientX-dragStartX;
+  track.style.transform=`translateX(${baseTranslate+dragDelta}px)`;
+});
+window.addEventListener('mouseup',()=>{
+  if(!isDragging) return;
+  isDragging=false;
+  track.classList.remove('dragging');
+  const vel=dragDelta/(Date.now()-dragBaseT);
+  if(Math.abs(dragDelta)>60||Math.abs(vel)>0.35) carouselMove(dragDelta<0?1:-1);
+  else goTo(currentIdx);
+  dragDelta=0;
+});
+// touch
+let touchX=0,touchBase=0;
+scene.addEventListener('touchstart',e=>{touchX=e.touches[0].clientX;touchBase=getTranslate();track.style.transition='none';},{passive:true});
+scene.addEventListener('touchmove',e=>{
+  const d=e.touches[0].clientX-touchX;
+  track.style.transform=`translateX(${touchBase+d}px)`;
+},{passive:true});
+scene.addEventListener('touchend',e=>{
+  track.style.transition='';
+  const d=touchX-e.changedTouches[0].clientX;
+  if(Math.abs(d)>50) carouselMove(d>0?1:-1);
+  else goTo(currentIdx);
+});
+
+// ── FOOTER — fit big name exactly to container width ─────────────────────────
+function fitFooterName(){
+  const nameEl=document.querySelector('.footer-big-name span');
+  const wrap=document.querySelector('.footer-big-name');
+  if(!nameEl||!wrap)return;
+  const targetW=wrap.offsetWidth;
+  // binary search for perfect font-size
+  let lo=40,hi=800,mid,iter=0;
+  nameEl.style.fontSize=hi+'px';
+  while(lo<hi-1&&iter<40){
+    mid=Math.floor((lo+hi)/2);
+    nameEl.style.fontSize=mid+'px';
+    if(nameEl.scrollWidth<=targetW) lo=mid;
+    else hi=mid;
+    iter++;
+  }
+  nameEl.style.fontSize=lo+'px';
+}
+window.addEventListener('load',fitFooterName);
+window.addEventListener('resize',fitFooterName);
+
+// ── SHOWREEL modal ────────────────────────────────────────────────────────────
+const showreelPlay=document.getElementById('showreelPlay');
+const videoModal=document.getElementById('videoModal');
+const videoClose=document.getElementById('videoClose');
+const videoFrame=document.getElementById('videoFrame');
+// Use a public sports clip from YouTube (replace src with real reel)
+const REEL_URL='https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=0';
+if(showreelPlay){
+  showreelPlay.addEventListener('click',()=>{
+    videoFrame.src=REEL_URL;
+    videoModal.classList.add('open');
+  });
+}
+if(videoClose){
+  videoClose.addEventListener('click',()=>{
+    videoModal.classList.remove('open');
+    videoFrame.src='';
+  });
+}
+if(videoModal){
+  videoModal.addEventListener('click',e=>{
+    if(e.target===videoModal){videoModal.classList.remove('open');videoFrame.src='';}
+  });
+}
+
+// ── HEAVY SMOOTH SCROLL ─────────────────────────────────────────────────────
+let scrollTarget=window.scrollY;
+let scrollCurrent=window.scrollY;
+const EASE=0.032; // lower = heavier/slower
+let scrollRaf=null;
+
+function smoothLoop(){
+  scrollCurrent+=(scrollTarget-scrollCurrent)*EASE;
+  const diff=Math.abs(scrollTarget-scrollCurrent);
+  window.scrollTo(0,scrollCurrent);
+  if(diff>0.5) scrollRaf=requestAnimationFrame(smoothLoop);
+  else{scrollCurrent=scrollTarget;scrollRaf=null;}
+}
+
+window.addEventListener('wheel',e=>{
+  e.preventDefault();
+  scrollTarget=Math.max(0,Math.min(document.body.scrollHeight-window.innerHeight,scrollTarget+e.deltaY*2.8));
+  if(!scrollRaf) scrollRaf=requestAnimationFrame(smoothLoop);
+},{passive:false});
+
+// nav smooth scroll
+document.querySelectorAll('a[href^="#"]').forEach(a=>{
+  a.addEventListener('click',e=>{
+    const target=document.querySelector(a.getAttribute('href'));
+    if(target){
+      e.preventDefault();
+      scrollTarget=target.getBoundingClientRect().top+scrollCurrent;
+      if(!scrollRaf) scrollRaf=requestAnimationFrame(smoothLoop);
+    }
+  });
+});
+
+// ── ABOUT scroll-opacity text — PER CHARACTER ────────────────────────────────
+const aboutText="Kami adalah komunitas mahasiswa yang berkomitmen mengembangkan jiwa juara. Melalui latihan keras, disiplin, dan kebersamaan — kami mencetak atlet sekaligus pemimpin yang siap bersaing di tingkat nasional.";
+const aboutBigText=document.getElementById('aboutBigText');
+if(aboutBigText){
+  // Build char spans, preserve spaces as .space spans
+  let html='';
+  for(let i=0;i<aboutText.length;i++){
+    const ch=aboutText[i];
+    if(ch===' ') html+='<span class="about-char space"> </span>';
+    else html+=`<span class="about-char">${ch}</span>`;
+  }
+  aboutBigText.innerHTML=html;
+  const charEls=aboutBigText.querySelectorAll('.about-char');
+  const aboutSection=document.getElementById('about');
+  function updateAboutChars(){
+    if(!aboutSection)return;
+    const rect=aboutSection.getBoundingClientRect();
+    const progress=Math.max(0,Math.min(1,(-rect.top+window.innerHeight*0.4)/(rect.height*0.55)));
+    const litCount=Math.floor(progress*charEls.length);
+    charEls.forEach((el,i)=>{
+      if(i<litCount) el.classList.add('lit');
+      else el.classList.remove('lit');
+    });
+  }
+  window.addEventListener('scroll',updateAboutChars,{passive:true});
+  updateAboutChars();
+}
+
+// ── KEGIATAN hover float image ─────────────────────────────────────────────
+const floatImg=document.getElementById('kegFloatImg');
+const floatImgEl=document.getElementById('kegFloatImgEl');
+let floatX=0,floatY=0,targetX=0,targetY=0,floatRaf=null;
+
+function animFloat(){
+  floatX+=(targetX-floatX)*0.1;
+  floatY+=(targetY-floatY)*0.1;
+  floatImg.style.left=floatX+'px';
+  floatImg.style.top=floatY+'px';
+  floatRaf=requestAnimationFrame(animFloat);
+}
+
+document.querySelectorAll('.keg-item').forEach(item=>{
+  const imgSrc=item.dataset.img;
+  item.addEventListener('mouseenter',()=>{
+    floatImgEl.src=imgSrc;
+    floatImg.classList.add('visible');
+    if(!floatRaf) floatRaf=requestAnimationFrame(animFloat);
+  });
+  item.addEventListener('mouseleave',()=>{
+    floatImg.classList.remove('visible');
+    cancelAnimationFrame(floatRaf);floatRaf=null;
+  });
+  item.addEventListener('mousemove',e=>{
+    targetX=e.clientX+24;
+    targetY=e.clientY-110;
+  });
+});
+</script>
+</body>
+</html>
